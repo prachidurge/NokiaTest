@@ -256,7 +256,7 @@ public class ContentActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.menu_sync:
-                //  startSync();
+
 
                 return true;
 
@@ -321,7 +321,7 @@ public class ContentActivity extends AppCompatActivity {
                 public void onClick(View v) {
 
                     finalViewHolder.rowSync.setBackgroundResource(R.color.row_selected_grey);
-                    startSync(finalViewHolder, position);
+                    startSync(finalViewHolder, position, true);
 
                 }
             });
@@ -338,10 +338,17 @@ public class ContentActivity extends AppCompatActivity {
 
         }
 
-        private void startSync(ViewHolder viewHolder, int position) {
+        int currentChosenFilePostion;
+
+        private void startSync(ViewHolder viewHolder, int position, boolean shouldCheckFile) {
+            currentChosenFilePostion = position;
             if (util.isInternetConnected(ContentActivity.this)) {
                 currentAsyncTask = new DownloadFileFromURL(viewHolder);
-                currentAsyncTask.execute(listContentFile.get(position).getInternetUrl());
+                if (shouldCheckFile && util.isString(appData.getIpECA())) {
+                    currentAsyncTask.execute(listContentFile.get(position).getEdgeUrl(), true);
+                } else {
+                    currentAsyncTask.execute(listContentFile.get(position).getInternetUrl(), false);
+                }
             } else {
                 Toast.makeText(ContentActivity.this, getResources().getString(R.string.no_internet), Toast.LENGTH_SHORT).show();
             }
@@ -367,10 +374,11 @@ public class ContentActivity extends AppCompatActivity {
             }
         }
 
-        class DownloadFileFromURL extends AsyncTask<String, String, Boolean> {
+        class DownloadFileFromURL extends AsyncTask<Object, String, Boolean> {
             ViewHolder vh;
             private File saveFolder;
             private File outputFile;
+            private boolean shouldCheckForFile;
 
             public DownloadFileFromURL(ViewHolder holder) {
                 this.vh = holder;
@@ -383,17 +391,20 @@ public class ContentActivity extends AppCompatActivity {
             }
 
             @Override
-            protected Boolean doInBackground(String... params) {
+            protected Boolean doInBackground(Object... params) {
                 int count;
+                String stringURL = params[0].toString();
+                shouldCheckForFile = (Boolean) params[1];
                 Calendar before, afterDownload, beforeDownload;
                 if (util.isInternetConnected(ContentActivity.this)) {
                     try {
                         before = Calendar.getInstance();
                         Calendar afterTtfb = null;
-                        URL url = new URL(params[0]);
+                        URL url = new URL(stringURL);
                         URLConnection conection = url.openConnection();
                         conection.connect();
                         lenghtOfFile = conection.getContentLength();
+
                         afterTtfb = (lenghtOfFile > 0) ? Calendar.getInstance() : null;
                         if (afterTtfb != null) {
                             TTFB = afterTtfb.getTimeInMillis() - before.getTimeInMillis();
@@ -403,7 +414,7 @@ public class ContentActivity extends AppCompatActivity {
                             }
                         }
                         saveFolder = new File(Environment.getExternalStorageDirectory(), "nokiatest");
-                        System.out.print("%%^%^" + saveFolder.getPath().toString());
+                        System.out.print( saveFolder.getPath().toString());
 
 
                         if (!saveFolder.exists()) {
@@ -411,7 +422,7 @@ public class ContentActivity extends AppCompatActivity {
 
                         }
 
-                        outputFile = new File(saveFolder, params[0].substring(params[0].lastIndexOf("/")));
+                        outputFile = new File(saveFolder, stringURL.substring(stringURL.lastIndexOf("/")));
                         InputStream input = new BufferedInputStream(url.openStream());
                         OutputStream output = new FileOutputStream(outputFile);
                         byte data[] = new byte[1024];
@@ -425,8 +436,8 @@ public class ContentActivity extends AppCompatActivity {
 
                         afterDownload = (lenghtOfFile > 0) ? Calendar.getInstance() : null;
                         if (afterDownload != null) {
-                            timeForDownload = afterTtfb.getTimeInMillis() - before.getTimeInMillis();
-                            throughput = lenghtOfFile / (afterDownload.getTimeInMillis() -beforeDownload.getTimeInMillis());
+                            timeForDownload = (afterDownload.getTimeInMillis() - beforeDownload.getTimeInMillis()) / 1000.0f;
+                            throughput = lenghtOfFile / (afterDownload.getTimeInMillis() - beforeDownload.getTimeInMillis());
 
                         }
                         output.flush();
@@ -464,15 +475,21 @@ public class ContentActivity extends AppCompatActivity {
             protected void onPostExecute(Boolean b) {
                 super.onPostExecute(b);
                 if (b) {
-                    vh.tvTimer.setText(timeForDownload + " s");
+                    vh.tvTimer.setText(timeForDownload + "");
                     vh.tvMD5.setText(util.generateMD5(outputFile));
-                    vh.tvThroughput.setText(throughput +"Kb/s");
+                    vh.tvThroughput.setText(throughput + "Kb/s");
                     if (!appData.getApplicationType().equalsIgnoreCase("demo")) {
                         Intent i = new Intent(ContentActivity.this, ContentDetailsActivity.class);
                         startActivity(i);
                     }
                 } else {
-                    vh.tvFileName.setTextColor(Color.RED);
+                    if (shouldCheckForFile) {
+                        startSync(vh, currentChosenFilePostion, false);
+
+                    } else {
+                        vh.tvFileName.setTextColor(Color.RED);
+                    }
+
                 }
             }
         }

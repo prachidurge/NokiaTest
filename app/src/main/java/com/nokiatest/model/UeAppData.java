@@ -11,6 +11,16 @@ public class UeAppData {
     private String ipECA="";
     private String ipCDN="";
     private String applicationType="";
+
+    public boolean isECAAvailable() {
+        return isECAAvailable;
+    }
+
+    public void setECAAvailable(boolean ECAAvailable) {
+        isECAAvailable = ECAAvailable;
+    }
+
+    private boolean isECAAvailable;
     private List<ListContentFile> listContentFiles = new ArrayList<>();
 
     public String getIpECA() {

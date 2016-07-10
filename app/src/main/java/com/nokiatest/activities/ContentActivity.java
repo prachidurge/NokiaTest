@@ -163,7 +163,7 @@ public class ContentActivity extends AppCompatActivity {
         appData.setIpCDN(parser.getElementValue(doc.getElementsByTagName(NODE_CDN_IP).item(0)));
         //Extract nodeAppType
         appData.setApplicationType(parser.getElementValue(doc.getElementsByTagName(NODE_APP_TYPE).item(0)));
-
+        appData.setECAAvailable(isEcaAvailable);
         //Extract content files
         NodeList nodeList = doc.getElementsByTagName(NODE_CONTENT_FILE);
         listContentFile = new ArrayList<>();
@@ -341,7 +341,7 @@ public class ContentActivity extends AppCompatActivity {
             currentChosenFilePostion = position;
             if (util.isInternetConnected(ContentActivity.this)) {
                 currentAsyncTask = new DownloadFileFromURL(viewHolder);
-                if (shouldCheckFile && util.isString(appData.getIpECA())) {
+                if (shouldCheckFile && appData.isECAAvailable()) {
                     currentAsyncTask.execute(listContentFile.get(position).getEdgeUrl(), true);
                 } else {
                     currentAsyncTask.execute(listContentFile.get(position).getInternetUrl(), false);

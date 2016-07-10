@@ -158,25 +158,22 @@ public class ContentActivity extends AppCompatActivity {
         Document doc = parser.getDomElement(response);
         appData = new UeAppData();
         // Extract edge_cloud_server_ip
-        if (isEcaAvailable) {
-            appData.setIpECA(parser.getElementValue(doc.getElementsByTagName(NODE_ECA_IP).item(0)));
-        } else {
-            // Extract acs_cloud_server_ip
-            appData.setIpCDN(parser.getElementValue(doc.getElementsByTagName(NODE_CDN_IP).item(0)));
-        }
+        appData.setIpECA(parser.getElementValue(doc.getElementsByTagName(NODE_ECA_IP).item(0)));
+        // Extract acs_cloud_server_ip
+        appData.setIpCDN(parser.getElementValue(doc.getElementsByTagName(NODE_CDN_IP).item(0)));
         //Extract nodeAppType
         appData.setApplicationType(parser.getElementValue(doc.getElementsByTagName(NODE_APP_TYPE).item(0)));
 
         //Extract content files
         NodeList nodeList = doc.getElementsByTagName(NODE_CONTENT_FILE);
         listContentFile = new ArrayList<>();
-        String activeUrl = util.isString(appData.getIpECA()) ? "http://" + appData.getIpECA() + "/" + title + "/" : "http://" + appData.getIpCDN() + "/" + title + "/";
-
+        String activeECAUrl = util.isString(appData.getIpECA()) ? "http://" + appData.getIpECA() + "/" + title + "/" : "";
+        String activeCDNUrl = util.isString(appData.getIpCDN()) ? "http://" + appData.getIpCDN() + "/" + title + "/" : "";
         for (int i = 0; i < nodeList.getLength(); i++) {
             Element e = (Element) nodeList.item(i);
             UeAppData.ListContentFile contentFileItem = appData.new ListContentFile();
-            contentFileItem.setEdgeUrl(activeUrl + parser.getValue(e, NODE_EDGE_URL));
-            contentFileItem.setInternetUrl(activeUrl + parser.getValue(e, NODE_INTERNET_URL));
+            contentFileItem.setEdgeUrl(activeECAUrl + parser.getValue(e, NODE_EDGE_URL));
+            contentFileItem.setInternetUrl(activeCDNUrl + parser.getValue(e, NODE_INTERNET_URL));
             listContentFile.add(contentFileItem);
         }
 
@@ -414,7 +411,7 @@ public class ContentActivity extends AppCompatActivity {
                             }
                         }
                         saveFolder = new File(Environment.getExternalStorageDirectory(), "nokiatest");
-                        System.out.print( saveFolder.getPath().toString());
+                        System.out.print(saveFolder.getPath().toString());
 
 
                         if (!saveFolder.exists()) {

@@ -8,9 +8,9 @@ public class UeAppData {
 
     private String cloudApplicationName;
 
-    private String ipECA;
-    private String ipCDN;
-    private String applicationType;
+    private String ipECA="";
+    private String ipCDN="";
+    private String applicationType="";
     private List<ListContentFile> listContentFiles = new ArrayList<>();
 
     public String getIpECA() {
